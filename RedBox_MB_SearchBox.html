@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Google Maps Example</title>
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    .button {
+      position: absolute;
+      bottom: 50px;
+      transform: translateX(-50%);
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #fff;
+      background-color: #007bff;
+      cursor: pointer;
+    }
+    #capture-button { left: 50%; }
+    #email-button { left: calc(50% + 70px); }
+
+    #search-bar {
+      position: absolute;
+      top: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 400px;
+      padding: 10px;
+      font-size: 14px;
+      border-radius: 4px;
+      border: none;
+      font-family: "Comic Sans MS", cursive, sans-serif;
+      background-size: cover;
+      box-shadow: 0 0 10px 2px #00008B;
+    }
+
+    #enter-button {
+      position: absolute;
+      top: 40px;
+      left: calc(50% + 240px);
+      transform: translateX(-50%);
+      padding: 2px 5px;
+      font-size: 15px;
+      height: 40px;
+    }
+
+    #capture-box {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 6.9in;
+      height: 4.1in;
+      border: 2px solid red;
+      border-radius: 10px;
+      box-shadow: 0 0 10px 2px red;
+      background-color: rgba(255, 0, 0, 0.2);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    #map-controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 2;
+    }
+
+    .title {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+      font-weight: bold;
+      color: #fff;
+      font-family: "Comic Sans MS", cursive, sans-serif;
+      background-color: #00008B;
+      padding: 5px 5px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="map-controls">
+    <button id="pan-button" class="button">Pan</button>
+    <button id="zoom-in-button" class="button">Zoom In</button>
+    <button id="zoom-out-button" class="button">Zoom Out</button>
+    <div id="compass"></div>
+  </div>
+  <h2 class="title">Add your location here</h2>
+  <input id="search-bar" type="text" placeholder="Search location">
+  <button id="enter-button" class="button">Enter</button>
+  <div id="capture-box"></div>
+  <button id="capture-button" class="button">Capture</button>
+  <button id="email-button" class="button">Email</button>
+
+  <!-- Email Modal -->
+  <div id="email-modal" style="display: none;">
+    <div>
+      <h3>Enter Email Address</h3>
+      <input type="email" id="email-input" placeholder="Email Address">
+      <button id="send-email-button">Send</button>
+    </div>
+  </div>
+
+  <script>
+    var map;
+    var geocoder;
+    var autocomplete;
+
+    function initMap() {
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 0, lng: 0 },
+        zoom: 1
+      });
+
+      geocoder = new google.maps.Geocoder();
+
+      var searchInput = document.getElementById('search-bar');
+      var enterButton = document.getElementById('enter-button');
+
+      autocomplete = new google.maps.places.Autocomplete(searchInput);
+
+      function geocodeLocation() {
+        var location = searchInput.value;
+        geocoder.geocode({ address: location }, function(results, status) {
+          if (status === google.maps.GeocoderStatus.OK && results.length > 0) {
+            var coordinates = results[0].geometry.location;
+            map.setCenter(coordinates);
+            map.setZoom(10);
+          } else {
+            console.log('Geocode was not successful for the following reason: ' + status);
+          }
+        });
+      }
+
+      searchInput.addEventListener('keydown', function(e) {
+        if (e.keyCode === 13) {
+          e.preventDefault();
+          geocodeLocation();
+        }
+      });
+
+      enterButton.addEventListener('click', function() {
+        geocodeLocation();
+      });
+
+      var captureButton = document.getElementById('capture-button');
+      captureButton.addEventListener('click', function() {
+        var center = map.getCenter();
+        var zoom = map.getZoom();
+        var size = '800x600'; // Adjust the size of the captured map
+
+        var staticMapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${center.lat()},${center.lng()}&zoom=${zoom}&size=${size}&key=AIzaSyCb-6QBsLiCGqT00366IzHuzwWMiI6D5ZA`;
+
+        var newWindow = window.open();
+        newWindow.document.write('<html><head><title>Map Capture</title></head><body><img src="' + staticMapUrl + '" alt="Map Capture"></body></html>');
+      });
+
+      var emailButton = document.getElementById('email-button');
+      emailButton.addEventListener('click', function() {
+        var emailModal = document.getElementById('email-modal');
+        emailModal.style.display = 'block';
+      });
+
+      var sendEmailButton = document.getElementById('send-email-button');
+      sendEmailButton.addEventListener('click', function() {
+        var emailInput = document.getElementById('email-input');
+        var emailAddress = emailInput.value;
+
+        // Replace this code with your own implementation to send an email
+        // using the emailAddress variable.
+        // You will need a server-side implementation to handle sending emails.
+
+        // Example using JavaScript's built-in email sending capabilities
+        // Note: This will open the user's default email client with a pre-filled email
+        var subject = 'Map Location';
+        var body = 'Please find the map location attached.';
+        var mailtoLink = `mailto:${emailAddress}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.location.href = mailtoLink;
+
+        // Close the email modal
+        var emailModal = document.getElementById('email-modal');
+        emailModal.style.display = 'none';
+        emailInput.value = '';
+      });
+    }
+  </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCb-6QBsLiCGqT00366IzHuzwWMiI6D5ZA&libraries=places&callback=initMap" async defer></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
